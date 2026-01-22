@@ -113,6 +113,7 @@ function deleteUser(id){
 
 // ------------------ Requests ------------------
 // Load pending requests
+// Load pending requests
 function loadRequests(){
   const table = document.getElementById("requestsTable");
   table.innerHTML="";
@@ -120,9 +121,12 @@ function loadRequests(){
     snapshot.forEach(doc=>{
       const data = doc.data();
       const tr = document.createElement("tr");
-      tr.innerHTML=`<td>${doc.id}</td><td>${data.approved}</td>
+      tr.innerHTML=`
+      <td>${doc.id}</td>
+      <td>${data.email}</td>
+      <td>${data.approved}</td>
       <td>
-        <button onclick="approveRequest('${doc.id}')">Approve</button>
+        <button onclick="approveRequest('${doc.id}', '${data.email}')">Approve</button>
         <button onclick="deleteRequest('${doc.id}')">Delete</button>
       </td>`;
       table.appendChild(tr);
