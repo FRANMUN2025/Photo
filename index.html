@@ -67,11 +67,15 @@ function login(){
 // No password request
 function noPassword(){
   const name = prompt("Enter your name for request:");
-  if(!name) return;
-  db.collection("requests").doc(name).set({approved:false})
-    .then(()=>alert(`Thanks for your request! Atef will review it and we will contact you.`));
+  const email = prompt("Enter your email (so we can contact you):");
+  if(!name || !email) return; // إذا لم يكتب شيء، لا ينفذ
+  db.collection("requests").doc(name).set({
+    approved: false,
+    email: email
+  }).then(()=>{
+    alert(`Thanks for your request! Atef will review it and we will contact you.`);
+  });
 }
-
 // Admin login prompt
 function adminLoginPrompt(){
   const pass = prompt("Enter admin password:");
