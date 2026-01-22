@@ -4,108 +4,137 @@
 <meta charset="UTF-8">
 <title>Admin Panel</title>
 <style>
-body {
-  background: linear-gradient(135deg,#0f0f0f,#2a2a2a);
-  font-family: Arial,sans-serif;
-  color:white;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-  margin:0;
-}
-.box {
-  background: rgba(0,0,0,0.75);
-  padding: 30px;
-  border-radius:14px;
-  width:360px;
-  box-shadow:0 0 20px rgba(0,0,0,0.6);
-}
-input, button {
-  width:100%;
-  padding:10px;
-  margin-top:10px;
-  border-radius:6px;
-  border:none;
-}
-button {
-  background:#ff2d55;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
-}
-.hidden { display:none; }
-ul { list-style:none; padding:0; }
-li { margin:5px 0; }
+body { font-family: Arial, sans-serif; background:#111; color:white; display:flex; justify-content:center; align-items:flex-start; padding:50px 0; margin:0;}
+.container { width:700px; background:rgba(0,0,0,0.85); padding:30px; border-radius:12px;}
+h2{ text-align:center; margin-bottom:20px;}
+input, button { padding:8px; margin:5px; border-radius:6px; border:none;}
+button { background:#ff2d55; color:white; font-weight:bold; cursor:pointer;}
+table { width:100%; border-collapse:collapse; margin-top:20px;}
+th, td { padding:8px; border:1px solid #444; text-align:center;}
+tr:nth-child(even){background:#222;}
+a{ color:#00f; text-decoration:none;}
+a:hover{ text-decoration:underline;}
 </style>
 </head>
 <body>
 
-<div class="box" id="loginBox">
-  <h2>🔑 تسجيل دخول الأدمن</h2>
-  <input type="password" id="adminPass" placeholder="كلمة سر الأدمن">
-  <button onclick="adminLogin()">دخول</button>
+<div class="container">
+<h2>Admin Panel</h2>
+
+<h3>Add New User</h3>
+<input type="text" id="newUser" placeholder="Username">
+<input type="password" id="newPass" placeholder="Password">
+<button onclick="addUser()">Add User</button>
+
+<h3>Users List</h3>
+<table>
+<tr><th>Username</th><th>Password</th><th>Approved</th><th>Actions</th></tr>
+<tbody id="usersTable"></tbody>
+</table>
+
+<h3>Add Drive Link</h3>
+<input type="text" id="linkName" placeholder="Album Name">
+<input type="text" id="linkUrl" placeholder="Google Drive URL">
+<button onclick="addDriveLink()">Add Link</button>
+
+<h3>Drive Links</h3>
+<table>
+<tr><th>Name</th><th>URL</th><th>Actions</th></tr>
+<tbody id="linksTable"></tbody>
+</table>
+
 </div>
 
-<div class="box hidden" id="panel">
-  <h2>📝 لوحة التحكم</h2>
-
-  <h3>المستخدمين الحاليين:</h3>
-  <ul id="userList"></ul>
-
-  <h3>➕ إضافة مستخدم جديد</h3>
-  <input type="text" id="newName" placeholder="اسم المستخدم">
-  <input type="text" id="newPass" placeholder="كلمة السر">
-  <button onclick="addUser()">إضافة</button>
-</div>
-
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
-let adminPassword = "swiftly"; // كلمة سر الأدمن
-
-// قاعدة بيانات مبدئية
-let users = {
-  "Ali":"passAli",
-  "Omar":"passOmar",
-  "Ahmed":"passAhmed"
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "API_KEY_HERE",
+  authDomain: "PROJECT_ID.firebaseapp.com",
+  projectId: "PROJECT_ID",
+  storageBucket: "PROJECT_ID.appspot.com",
+  messagingSenderId: "SENDER_ID",
+  appId: "APP_ID"
 };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-// تسجيل دخول الأدمن
-function adminLogin() {
-  const pass = document.getElementById("adminPass").value;
-  if(pass === adminPassword){
-    document.getElementById("loginBox").classList.add("hidden");
-    document.getElementById("panel").classList.remove("hidden");
-    renderUsers();
-  } else {
-    alert("❌ كلمة سر الأدمن خاطئة");
-  }
-}
-
-// عرض المستخدمين
-function renderUsers() {
-  const list = document.getElementById("userList");
-  list.innerHTML="";
-  for(let name in users){
-    const li = document.createElement("li");
-    li.innerText = name + " | " + users[name];
-    list.appendChild(li);
-  }
-}
-
-// إضافة مستخدم
+// Add new user
 function addUser(){
-  const name = document.getElementById("newName").value.trim();
-  const pass = document.getElementById("newPass").value.trim();
-  if(name && pass){
-    users[name] = pass;
-    renderUsers();
-    document.getElementById("newName").value="";
-    document.getElementById("newPass").value="";
-    alert("✅ تم إضافة المستخدم");
-  } else {
-    alert("ادخل الاسم وكلمة السر");
+  const u = document.getElementById("newUser").value.trim();
+  const p = document.getElementById("newPass").value.trim();
+  if(!u || !p){ alert("Enter username & password"); return;}
+  db.collection("users").doc(u).set({password:p, approved:true}).then(()=>{
+    alert("User added!");
+    loadUsers();
+  });
+}
+
+// Load users
+function loadUsers(){
+  const table = document.getElementById("usersTable");
+  table.innerHTML="";
+  db.collection("users").get().then(snapshot=>{
+    snapshot.forEach(doc=>{
+      const data = doc.data();
+      const tr = document.createElement("tr");
+      tr.innerHTML=`<td>${doc.id}</td><td>${data.password}</td><td>${data.approved}</td>
+      <td>
+        <button onclick="toggleApprove('${doc.id}',${data.approved})">Toggle Approve</button>
+        <button onclick="deleteUser('${doc.id}')">Delete</button>
+      </td>`;
+      table.appendChild(tr);
+    });
+  });
+}
+
+// Toggle approval
+function toggleApprove(id,current){
+  db.collection("users").doc(id).update({approved:!current}).then(()=> loadUsers());
+}
+
+// Delete user
+function deleteUser(id){
+  if(confirm("Delete this user?")){
+    db.collection("users").doc(id).delete().then(()=> loadUsers());
   }
 }
+
+// Add Drive link
+function addDriveLink(){
+  const name = document.getElementById("linkName").value.trim();
+  const url = document.getElementById("linkUrl").value.trim();
+  if(!name || !url){ alert("Enter name & URL"); return;}
+  const docId = name.replace(/\s+/g,"_").toLowerCase();
+  db.collection("driveLinks").doc(docId).set({name:name,url:url}).then(()=>{ alert("Link added!"); loadLinks(); });
+}
+
+// Load Drive links
+function loadLinks(){
+  const table = document.getElementById("linksTable");
+  table.innerHTML="";
+  db.collection("driveLinks").get().then(snapshot=>{
+    snapshot.forEach(doc=>{
+      const data = doc.data();
+      const tr = document.createElement("tr");
+      tr.innerHTML=`<td>${data.name}</td><td><a href="${data.url}" target="_blank">${data.url}</a></td>
+      <td><button onclick="deleteLink('${doc.id}')">Delete</button></td>`;
+      table.appendChild(tr);
+    });
+  });
+}
+
+// Delete Drive link
+function deleteLink(id){
+  if(confirm("Delete this link?")){
+    db.collection("driveLinks").doc(id).delete().then(()=> loadLinks());
+  }
+}
+
+// Initial load
+loadUsers();
+loadLinks();
 </script>
 
 </body>
