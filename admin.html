@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Area</title>
+<style>
+body {
+  background: linear-gradient(135deg, #0f0f0f, #2a2a2a);
+  color: white;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+.box {
+  background: rgba(0,0,0,0.75);
+  padding: 30px;
+  border-radius: 14px;
+  width: 360px;
+  box-shadow: 0 0 30px rgba(0,0,0,0.6);
+}
+h2 { text-align: center; margin-bottom: 20px; }
+input, textarea, button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+}
+textarea { height: 120px; resize: none; }
+button { background: #ff2d55; color: white; font-weight: bold; cursor: pointer; }
+.hidden { display: none; }
+.note { font-size: 12px; opacity: 0.7; margin-top: 10px; }
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div class="box" id="loginBox">
+  <h2>🔑 تسجيل دخول الأدمن</h2>
+  <input type="password" id="adminPass" placeholder="كلمة سر الأدمن">
+  <button onclick="login()">دخول</button>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="box hidden" id="panel">
+  <h2>➕ لوحة الروابط</h2>
+  <textarea id="links" placeholder="الصق روابط Google Drive هنا..."></textarea>
+  <button onclick="copyLinks()">📋 انسخ الروابط</button>
+  <p class="note">
+    انسخ الروابط من هنا وضعها داخل ملف <b>index.html</b>  
+    كل رابط داخل &lt;a&gt; tag
+  </p>
+</div>
+
+<script>
+function login() {
+  if (document.getElementById("adminPass").value === "swiftly") {
+    document.getElementById("loginBox").classList.add("hidden");
+    document.getElementById("panel").classList.remove("hidden");
+  } else {
+    alert("❌ كلمة سر الأدمن خاطئة");
+  }
+}
+
+function copyLinks() {
+  const text = document.getElementById("links");
+  text.select();
+  document.execCommand("copy");
+  alert("✅ تم نسخ الروابط!");
+}
+</script>
+
+</body>
+</html>
