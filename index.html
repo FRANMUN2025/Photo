@@ -2,95 +2,159 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Private Site</title>
+<title>Private Gallery</title>
 <style>
-body {
-  background: linear-gradient(135deg,#1a1a1a,#3a3a3a);
-  font-family: Arial,sans-serif;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  margin:0;
-}
-.box {
-  background: rgba(0,0,0,0.75);
-  padding: 30px;
-  border-radius: 12px;
-  width: 320px;
-  text-align: center;
-}
-input, button {
-  width:100%;
-  padding:10px;
-  margin-top:10px;
-  border-radius:6px;
-  border:none;
-}
-button {
-  background:#ff2d55;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
-}
-.hidden { display:none; }
+body { font-family: Arial, sans-serif; background:#222; color:white; display:flex; justify-content:center; align-items:center; height:100vh; margin:0;}
+.box { background: rgba(0,0,0,0.8); padding:30px; border-radius:12px; width:360px; text-align:center;}
+input, button { width:100%; padding:10px; margin-top:10px; border-radius:6px; border:none;}
+button { background:#ff2d55; color:white; font-weight:bold; cursor:pointer;}
+.hidden{ display:none;}
+a{ display:block; color:#00f; margin:5px 0; text-decoration:none;}
+a:hover{ text-decoration:underline;}
+#drama{ color:red; animation:shake 0.5s; }
+@keyframes shake { 0%{transform:translateX(0);}25%{transform:translateX(-5px);}50%{transform:translateX(5px);}75%{transform:translateX(-5px);}100%{transform:translateX(0);}}
 </style>
 </head>
-
 <body>
 
-<div class="box" id="loginBox">
-  <h2>🔐 تسجيل الدخول</h2>
-  <input type="text" id="username" placeholder="اسمك">
-  <input type="password" id="password" placeholder="كلمة السر">
-  <button onclick="login()">دخول</button>
+<div class="box" id="choiceBox">
+  <h2>🔐 Choose Login</h2>
+  <button onclick="showLogin()">I'm the Admin</button>
+  <button onclick="showUserLogin()">User</button>
+  <button onclick="showRegister()">No password</button>
+</div>
+
+<div class="box hidden" id="adminLoginBox">
+  <h2>🔑 Admin Login</h2>
+  <input type="password" id="adminPass" placeholder="Admin password">
+  <button onclick="adminLogin()">Login</button>
+  <p id="drama"></p>
+  <button onclick="backChoice()">Back</button>
+</div>
+
+<div class="box hidden" id="userLoginBox">
+  <h2>👤 User Login</h2>
+  <input type="text" id="username" placeholder="Username">
+  <input type="password" id="password" placeholder="Password">
+  <button onclick="userLogin()">Login</button>
   <p id="msg"></p>
+  <button onclick="backChoice()">Back</button>
+</div>
+
+<div class="box hidden" id="registerBox">
+  <h2>✍️ Register New Account</h2>
+  <input type="text" id="regName" placeholder="Username">
+  <input type="password" id="regPass" placeholder="Password">
+  <button onclick="requestApproval()">Send request</button>
+  <p id="regMsg"></p>
+  <button onclick="backChoice()">Back</button>
 </div>
 
 <div class="box hidden" id="welcomeBox">
   <h2 id="welcomeMsg"></h2>
-  <p>📸 معرض الصور:</p>
-  <a href="PUT_DRIVE_LINK_1" target="_blank">Album 1</a>
-  <a href="PUT_DRIVE_LINK_2" target="_blank">Album 2</a>
-  <hr>
-  <a href="admin.html">🔑 صفحة الأدمن</a>
+  <p>📸 Album Links:</p>
+  <div id="driveLinks"></div>
+  <button onclick="logout()">Logout</button>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
 <script>
-// قاعدة بيانات المستخدمين
-let users = {
-  "Ali":"passAli",
-  "Omar":"passOmar",
-  "Ahmed":"passAhmed"
+// 🔹 Firebase Config
+const firebaseConfig = {
+  apiKey: "API_KEY_HERE",
+  authDomain: "PROJECT_ID.firebaseapp.com",
+  projectId: "PROJECT_ID",
+  storageBucket: "PROJECT_ID.appspot.com",
+  messagingSenderId: "SENDER_ID",
+  appId: "APP_ID"
 };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-// تسجيل الدخول
-function login() {
-  const name = document.getElementById("username").value.trim();
-  const pass = document.getElementById("password").value.trim();
+// Admin password
+const adminPassword = "swiftly";
 
-  if(users[name] && users[name] === pass) {
-    localStorage.setItem("currentUser", name); // حفظ الدخول
-    showWelcome(name);
-  } else {
-    document.getElementById("msg").innerText="❌ اسم أو كلمة السر خاطئة";
+// Pages
+function showLogin(){ document.getElementById("choiceBox").classList.add("hidden"); document.getElementById("adminLoginBox").classList.remove("hidden");}
+function showUserLogin(){ document.getElementById("choiceBox").classList.add("hidden"); document.getElementById("userLoginBox").classList.remove("hidden");}
+function showRegister(){ document.getElementById("choiceBox").classList.add("hidden"); document.getElementById("registerBox").classList.remove("hidden");}
+function backChoice(){ 
+  document.getElementById("adminLoginBox").classList.add("hidden"); 
+  document.getElementById("userLoginBox").classList.add("hidden"); 
+  document.getElementById("registerBox").classList.add("hidden");
+  document.getElementById("choiceBox").classList.remove("hidden");
+}
+
+// Admin login
+function adminLogin(){
+  const pass = document.getElementById("adminPass").value;
+  const drama = document.getElementById("drama");
+  if(pass === adminPassword){
+    window.location.href = "admin.html";
+  }else{
+    drama.textContent = "💥 Wrong password! Don't mess with me!";
   }
 }
 
-// عرض الترحيب
-function showWelcome(name){
-  document.getElementById("loginBox").classList.add("hidden");
-  document.getElementById("welcomeBox").classList.remove("hidden");
-  document.getElementById("welcomeMsg").innerText = "مرحباً يا " + name + " 👋";
+// User login
+function userLogin(){
+  const user = document.getElementById("username").value.trim();
+  const pass = document.getElementById("password").value.trim();
+  const msg = document.getElementById("msg");
+  db.collection("users").doc(user).get().then(doc=>{
+    if(!doc.exists){ msg.textContent = "User not found"; return;}
+    if(doc.data().password === pass){
+      if(doc.data().approved){
+        showWelcome(user);
+      }else{
+        msg.textContent = "Waiting for admin approval";
+      }
+    }else{
+      msg.textContent = "Wrong password";
+    }
+  })
 }
 
-// تحقق إذا المستخدم مسجل من قبل
-window.onload = () => {
-  const user = localStorage.getItem("currentUser");
-  if(user) showWelcome(user);
+// Show welcome + Drive links
+function showWelcome(user){
+  document.getElementById("userLoginBox").classList.add("hidden");
+  document.getElementById("registerBox").classList.add("hidden");
+  document.getElementById("welcomeBox").classList.remove("hidden");
+  document.getElementById("welcomeMsg").textContent = `Welcome ${user}!`;
+  const container = document.getElementById("driveLinks");
+  container.innerHTML = "";
+  db.collection("driveLinks").get().then(snapshot=>{
+    snapshot.forEach(doc=>{
+      const a = document.createElement("a");
+      a.href = doc.data().url;
+      a.target="_blank";
+      a.textContent = doc.data().name;
+      container.appendChild(a);
+    });
+  });
+}
+
+// Logout
+function logout(){
+  document.getElementById("welcomeBox").classList.add("hidden");
+  backChoice();
+}
+
+// Register new user
+function requestApproval(){
+  const user = document.getElementById("regName").value.trim();
+  const pass = document.getElementById("regPass").value.trim();
+  const msg = document.getElementById("regMsg");
+  if(!user || !pass){ msg.textContent = "Please enter username & password"; return;}
+  db.collection("users").doc(user).get().then(doc=>{
+    if(doc.exists){ msg.textContent = "User already exists"; return;}
+    db.collection("users").doc(user).set({password:pass, approved:false}).then(()=>{
+      msg.textContent = "Request sent! Wait for admin approval.";
+    });
+  });
 }
 </script>
-
 </body>
 </html>
